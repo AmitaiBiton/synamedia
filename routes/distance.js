@@ -36,11 +36,13 @@ module.exports = {
             res.status(200).send();
     },
     get_distance: function (req, res) {
-        
+        if (req.query.source == null || req.query.destination == null){
+            res.status(400).send()
+        }
         var src = req.query.source
         var des = req.query.destination
         Dist.find({ source: src,
-        destination:des }).then(item =>{ 
+        destination:des },).then(item =>{ 
             if (item[0] != undefined){
                 
                 var new_hits = item[0].hits +1
@@ -99,8 +101,39 @@ module.exports = {
 
     },
     post_new_distance : function (req, res) {
-
+        if (req.body.source==null 
+            || req.body.destination==null || req.body.distance==null ){
+                res.status(400).send()
+            
+        }
+        var src = req.body.source
+        var des = req.body.destination
+        Dist.find({ source: src,
+            destination:des }).then(item =>{ 
+                if (item[0] != undefined){
+                    
+                    var new_hits = item[0].hits +1
+                    var new_item =  {source:src , destination:des , hits:new_hits , distance:item[0].distance }
+                    Dist.findOne({ source: src,
+                        destination:des }).
+                    then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits , distance:req.body.distance })).
+                    then(() => Dist.findOne({hits:new_hits })).
+                    then(doc => console.log(doc.name)); // 'Neo'
+                    res.status(200).send({'distance': item[0].distance})
+                }
+                else{
         
+        
+                    const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 0}
+                    item = new Dist(new_item)
+                    item.save().then(user => {
+                        res.status(201).send(item)
+                    }).catch(e => {
+                        res.status(400).send(e)
+                    })
+                }
+
+        })
     }
 
 

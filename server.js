@@ -1,5 +1,6 @@
 const bodyParser = require('body-parser')
 const express = require('express')
+require('./db/mongoose')
 const routers = require('./routes/routes.js')
 
 

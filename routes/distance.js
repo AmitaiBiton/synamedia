@@ -3,7 +3,7 @@ const Dist = require('../model/city_dist')
 const mongoose = require('mongoose')
 
 var distance = require('google-distance');
-distance.apiKey = 'AIzaSyAnyhAM8IYIYSFIlbkJdpGL4cHrMO8qd1A';
+distance.apiKey = 'Key';
 
 
 

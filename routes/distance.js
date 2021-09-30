@@ -110,12 +110,15 @@ module.exports = {
         /* RUN-TIME: O(1)*/
 
     get_connect_status: function (req, res) {
+        /*  mongoose.connection.close()  will close the DB and Return 500 */
+        /* (1,2) connect, (0,4) disconnect  */
         var connect  = mongoose.connection.readyState
-        if  (connect ==1){
+        console.log(connect)
+        if  (connect == 1 || connect == 2 ){
             res.status(200).send()
         }
         else{
-            res.status(500).send()
+            res.status(500).json({ error: "Error, server connection refused" })
         }
     },
 
@@ -141,7 +144,7 @@ module.exports = {
         /*  req - checking */
         if (req.body.source==null 
             || req.body.destination==null || req.body.distance==null ){
-                res.status(400).send()     
+                res.status(400).send("un valid request")     
         }
 
 
@@ -152,30 +155,65 @@ module.exports = {
 
                 /* if the item allready exist so update the hits and the distance */
                 if (item[0] != undefined){
-                    
+                    console.log("ASASASA")
                     var new_hits = item[0].hits +1
                     var new_item =  {source:src , destination:des , hits:new_hits , distance:item[0].distance }
                     Dist.findOne({ source: src,
                         destination:des }).
                     then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits , distance:req.body.distance })).
-                    then(() => Dist.findOne({hits:new_hits })).
-                    then(doc => console.log(doc.name)); // 'Neo'
-                    res.status(200).send({'distance': item[0].distance})
+                    then(() => Dist.findOne({source: src,
+                        destination:des })).
+                    then(doc => res.status(200).send({ doc})).catch(e => res.status(500).send())
                 }
 
                 /* if is not exist so create item and store in the DB */
                 else{
-        
-                    const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 0}
-                    item = new Dist(new_item)
-                    item.save().then(user => {
-                        res.status(201).send(item)
-                    }).catch(e => {
-                        res.status(400).send(e)
-                    })
-                }
+                    Dist.find({ source: des,
+                        destination:src },).then(item =>{ 
+                            /* The item appears with inverse values  */
+                            if (item[0]!=undefined){
+                                
+                                var new_hits = item[0].hits +1
+                                //var new_item =  {source:des , destination:src , hits:new_hits , distance:item[0].distance }
+                                Dist.findOne({ source: des,
+                                    destination:src }).
+                                then(doc => Dist.updateOne({ _id: doc._id }, {  hits: new_hits , distance:req.body.distance })).
+                                then(() => Dist.findOne({source: des,destination:src })).
+                                then(doc => res.status(200).send(doc))
+                            }
+                            /* not exist */
+                            else{
+                                
+                                 /* check if the city name exist in google maps and valid ,  (Edge case - "barcelon" Apparently Google fills in the blanks)*/
+                                distance.get(
+                                    {
+                                        origin: src,
+                                        destination: des
+                                    },
+                                    function(err, data) {
+                                        /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
+                                        if (err) res.status(400).send("please enter a valid city name");
 
+                                        else{
+                                            const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 0}
+                                            item = new Dist(new_item)
+                                            item.save().then(item => {    
+                                                res.status(201).send(item)
+                                            }).catch(e => {
+                                                res.status(400).send(e)
+                                            })
+                                        }
+                                    }
+                                )
+                            }
+                        })
+                        
+                    
+                   
+                }
+            
         })
+    
     }
 
 

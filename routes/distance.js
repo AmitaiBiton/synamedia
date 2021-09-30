@@ -218,3 +218,10 @@ module.exports = {
 
 
 };
+// /distance?source=jerusalem&destination=telaviv
+// /distance?source=jerusalem&destination=paris
+// /distance?source=jerusalem&destination=barcelona
+// /distance?source=barcelona&destination=jerusalem
+// /distance?source=telaviv&destination=jerusalem
+// /health
+// /hello

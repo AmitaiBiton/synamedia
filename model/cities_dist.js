@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
+/*Building a model that will require our collection to be in the way we are interested in putting items into the database */
 var distSchema = new mongoose.Schema({
+    /* */
     source: {
         type: String,
         required: true
@@ -12,6 +14,7 @@ var distSchema = new mongoose.Schema({
         required: true
         
     },
+
     hits:{
         type:Number,
         required:true
@@ -20,6 +23,8 @@ var distSchema = new mongoose.Schema({
     distance: {
         type: String,
         default: 0,
+        required:true,
+        /* distance can not be under zero unvalid */
         validate(value) {
             if (value < 0) {
                 throw new Error('Age must be a postive number')

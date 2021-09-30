@@ -7,6 +7,7 @@ router.get('/', (req, res) => {
    res.send('welcome to the development api-server');
 });
 
+/*Routing requests to desired functions */
 router.get('/hello', d_routes.server_check);
 router.get('/distance' , d_routes.get_distance);
 router.get('/health' , d_routes.get_connect_status);

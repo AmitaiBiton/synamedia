@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 /* get google maps API */
 var distance = require('google-distance');
 /* In order to use the Google Maps API it is necessary to create it in the cloud and get a unique key that will allow access to it */
-distance.apiKey = 'as';
+distance.apiKey = 'AIzaSyAhKs--ika7tFXssuVZ9WrGGynD5a8hei8';
 
 
 
@@ -36,75 +36,47 @@ module.exports = {
         var src = req.query.source
         var des = req.query.destination
 
-        Dist.find({ source: src,
-        destination:des },).then(item =>{ 
-
-
+        Dist.find({$or:  [{ source: src,
+        destination:des  } , {source:des , destination:src}]},).then(item =>
+        {
             /* Check if the item allready in the DB */
             if (item[0] != undefined){
-                var new_hits = item[0].hits +1
-                var new_item =  {source:src , destination:des , hits:new_hits , distance:item[0].distance }
-                Dist.findOne({ source: src,
-                    destination:des }).
-                then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits })).
-                then(() => Dist.findOne({hits:new_hits })).
-                then(doc => console.log(doc.name)); 
+                console.log(src , des, item[0]._id)
+                Dist.findOne({$or:  [{ source: src,
+                    destination:des  } , {source:des , destination:src}]}).
+                then(item => Dist.updateOne({ _id: item._id }, {$inc : {'hits' : 1}}))
+                .catch(e => res.status(500).send())
                 res.status(200).send({'distance': item[0].distance})
             }
-
-
-            /* the item is not in the DB*/
             else{
-                Dist.find({ source: des,
-                    destination:src },).then(item =>{ 
-                        /* The item appears with inverse values  */
-                        if (item[0]!=undefined){
-                            var new_hits = item[0].hits +1
-                            var new_item =  {source:des , destination:src , hits:new_hits , distance:item[0].distance }
-                            Dist.findOne({ source: des,
-                                destination:src }).
-                            then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits })).
-                            then(() => Dist.findOne({hits:new_hits })).
-                            /* res after update */
-                            then(doc => res.status(200).send({'distance': item[0].distance}))
-                        }
+                /* caculate the distance between src and des by google maps API and store in the DB */
+                distance.get(
+                    {
+                        origin: src,
+                        destination: des
+                    },
+                    function(err, data) {
+                        console.log(src , des)
+                        /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
+                        if (err)  console.log(err);
 
-
-                        /* The item does not appear in any form, so we need to create one */
                         else{
-                            /* caculate the distance between src and des by google maps API and store in the DB */
-                            distance.get(
-                                {
-                                    origin: src,
-                                    destination: des
-                                },
-                                function(err, data) {
-                                    console.log(src , des)
-                                    /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
-                                    if (err)  console.log(err);
-
-                                    else{
-                                        dist = data.distance
-                                        console.log(dist)
-                                        var new_item = {'source': src , 'destination':des ,'hits':0, 'distance':dist}
-                                        const d = new Dist(new_item);
-                                        d.save().then(d=>
-                                            res.status(201).send({'distance': d.distance})
-                                        ).catch(e=>res.status(400).send(e))
-                                    }
-                                    
-                    
-                                })
+                            dist = data.distance
+                            console.log(dist)
+                            var new_item = {'source': src , 'destination':des ,'hits':1, 'distance':dist}
+                            const d = new Dist(new_item);
+                            d.save().then(d=>
+                                res.status(201).send({'distance': d.distance})
+                            ).catch(e => res.status(500).send())
                         }
                     })
-                
-            } 
+            }
         }          
         ).catch(e => res.status(500).send())
         
         
         //res.status(200).send('source = '+source+'\n' + ' destination = ' +  destination + '' );
-    },
+    },   
 
 
     /* Q3: check the connection to the DB */
@@ -148,77 +120,45 @@ module.exports = {
             || req.body.destination==null || req.body.distance==null ){
                 res.status(400).send("un valid request")     
         }
-
-
+        var i ;
         var src = req.body.source
         var des = req.body.destination
-        Dist.find({ source: src,
-            destination:des }).then(item =>{ 
-
+        Dist.find({$or:  [{ source: src,
+            destination:des  } , {source:des , destination:src}]}).then(item =>{ 
                 /* if the item allready exist so update the hits and the distance */
                 if (item[0] != undefined){
+                     i = item
+                    Dist.findOne({$or:  [{ source: src,
+                        destination:des  } , {source:des , destination:src}]}).
+                    then(item => { Dist.updateOne({ _id: item._id },{$inc : {'hits' : 1},distance:req.body.distance}).then(i => res.status(200).send(item))}).
+                    catch(e => res.status(500).send(e))
                     
-                    var new_hits = item[0].hits +1
-                    var new_item =  {source:src , destination:des , hits:new_hits , distance:item[0].distance }
-                    Dist.findOne({ source: src,
-                        destination:des }).
-                    then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits , distance:req.body.distance })).
-                    then(() => Dist.findOne({source: src,
-                        destination:des })).
-                    then(doc => res.status(200).send({ doc})).catch(e => res.status(500).send())
-                }
-
+                }   
                 /* if is not exist so create item and store in the DB */
                 else{
-                    Dist.find({ source: des,
-                        destination:src },).then(item =>{ 
-                            /* The item appears with inverse values  */
-                            if (item[0]!=undefined){
-                                
-                                var new_hits = item[0].hits +1
-                                //var new_item =  {source:des , destination:src , hits:new_hits , distance:item[0].distance }
-                                Dist.findOne({ source: des,
-                                    destination:src }).
-                                then(doc => Dist.updateOne({ _id: doc._id }, {  hits: new_hits , distance:req.body.distance })).
-                                then(() => Dist.findOne({source: des,destination:src })).
-                                then(doc => res.status(200).send(doc))
-                            }
-                            /* not exist */
+                    distance.get(
+                        {
+                            origin: src,
+                            destination: des
+                        },
+                        function(err, data) {
+                            /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
+                            if (err) res.status(400).send("please enter a valid city name");
+
                             else{
-                                
-                                 /* check if the city name exist in google maps and valid ,  (Edge case - "barcelon" Apparently Google fills in the blanks)*/
-                                distance.get(
-                                    {
-                                        origin: src,
-                                        destination: des
-                                    },
-                                    function(err, data) {
-                                        /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
-                                        if (err) res.status(400).send("please enter a valid city name");
-
-                                        else{
-                                            const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 1}
-                                            item = new Dist(new_item)
-                                            item.save().then(item => {    
-                                                res.status(201).send(item)
-                                            }).catch(e => {
-                                                res.status(400).send(e)
-                                            })
-                                        }
-                                    }
-                                )
+                                const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 1}
+                                item = new Dist(new_item)
+                                item.save().then(item => {    
+                                    res.status(201).send(item)
+                                }).catch(e => {
+                                    res.status(500).send(e)
+                                })
                             }
-                        })
-                        
-                    
-                   
+                        }
+                    )
                 }
-            
-        })
-    
+            })
     }
-
-
 };
 // /distance?source=jerusalem&destination=telaviv
 // /distance?source=jerusalem&destination=paris

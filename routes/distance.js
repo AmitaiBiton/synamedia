@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 /* get google maps API */
 var distance = require('google-distance');
 /* In order to use the Google Maps API it is necessary to create it in the cloud and get a unique key that will allow access to it */
-distance.apiKey = 'AIzaSyAhKs--ika7tFXssuVZ9WrGGynD5a8hei8';
+distance.apiKey = 'as';
 
 
 

@@ -6,13 +6,14 @@ var distSchema = new mongoose.Schema({
     /* */
     source: {
         type: String,
-        required: true
+        required: true,
+        uppercase: true
         
     },
     destination: {
         type: String,
-        required: true
-        
+        required: true,
+        uppercase: true
     },
 
     hits:{

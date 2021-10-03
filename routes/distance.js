@@ -7,7 +7,9 @@ var distance = require('google-distance');
 /* In order to use the Google Maps API it is necessary to create it in the cloud and get a unique key that will allow access to it */
 distance.apiKey = 'AIzaSyAhKs--ika7tFXssuVZ9WrGGynD5a8hei8';
 
-
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
 
 
 
@@ -33,8 +35,8 @@ module.exports = {
             res.status(400).send()
         }
         
-        var src = req.query.source
-        var des = req.query.destination
+        var src = capitalizeFirstLetter(req.query.source)
+        var des = capitalizeFirstLetter(req.query.destination)
 
         Dist.find({$or:  [{ source: src,
         destination:des  } , {source:des , destination:src}]},).then(item =>
@@ -160,10 +162,5 @@ module.exports = {
             })
     }
 };
-// /distance?source=jerusalem&destination=telaviv
-// /distance?source=jerusalem&destination=paris
-// /distance?source=jerusalem&destination=barcelona
-// /distance?source=barcelona&destination=jerusalem
-// /distance?source=telaviv&destination=jerusalem
-// /health
-// /hello
+
+

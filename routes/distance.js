@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 /* get google maps API */
 var distance = require('google-distance');
 /* In order to use the Google Maps API it is necessary to create it in the cloud and get a unique key that will allow access to it */
-distance.apiKey = 'AIzaSyAnyhAM8IYIYSFIlbkJdpGL4cHrMO8qd1A';
+distance.apiKey = 'AIzaSyAhKs--ika7tFXssuVZ9WrGGynD5a8hei8';
 
 
 
@@ -48,7 +48,7 @@ module.exports = {
                     destination:des }).
                 then(doc => Dist.updateOne({ _id: doc._id }, { hits: new_hits })).
                 then(() => Dist.findOne({hits:new_hits })).
-                then(doc => console.log(doc.name)); // 'Neo'
+                then(doc => console.log(doc.name)); 
                 res.status(200).send({'distance': item[0].distance})
             }
 
@@ -79,8 +79,9 @@ module.exports = {
                                     destination: des
                                 },
                                 function(err, data) {
+                                    console.log(src , des)
                                     /* if the client will input city name unvalid or city that not exist the server will output 400 response*/
-                                    if (err) res.status(400).send("please enter a valid city name");
+                                    if (err)  console.log(err);
 
                                     else{
                                         dist = data.distance
@@ -112,6 +113,7 @@ module.exports = {
     get_connect_status: function (req, res) {
         /*  mongoose.connection.close()  will close the DB and Return 500 */
         /* (1,2) connect, (0,4) disconnect  */
+        
         var connect  = mongoose.connection.readyState
         console.log(connect)
         if  (connect == 1 || connect == 2 ){
@@ -130,7 +132,7 @@ module.exports = {
     get_popular_search: function (req, res) {
         /* in Q2 we save the hits for any item we store or read so we need only get the item with the max value of hits */
         Dist.findOne()
-        .sort('-score')  // give me the max
+        .sort('-hits')  // give me the max
         .exec(function (err, item) {
             res.status(200).send(item)
         });
@@ -155,7 +157,7 @@ module.exports = {
 
                 /* if the item allready exist so update the hits and the distance */
                 if (item[0] != undefined){
-                    console.log("ASASASA")
+                    
                     var new_hits = item[0].hits +1
                     var new_item =  {source:src , destination:des , hits:new_hits , distance:item[0].distance }
                     Dist.findOne({ source: src,
@@ -195,7 +197,7 @@ module.exports = {
                                         if (err) res.status(400).send("please enter a valid city name");
 
                                         else{
-                                            const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 0}
+                                            const new_item  = {"source": req.body.source , "destination" : req.body.destination , "distance" : req.body.distance , "hits": 1}
                                             item = new Dist(new_item)
                                             item.save().then(item => {    
                                                 res.status(201).send(item)
